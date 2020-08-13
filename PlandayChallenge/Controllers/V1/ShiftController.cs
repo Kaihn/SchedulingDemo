@@ -124,8 +124,7 @@ namespace PlandayChallenge.Controllers.V1
                 return StatusCode(StatusCodes.Status406NotAcceptable, "The duration for the given shift is not valid, as shifts are not allowed to go beyond the assigned day, and must be bigger than 0. End of shift was "
                     + (request.StartTime + request.Duration) + ".");
             }
-            Shift shift = await _shiftService.GetShiftById(shiftId);
-            List<Shift> allShiftForEmployee = await _shiftService.GetShiftsForSpecificEmployeeByIdAsync(shift.ShiftOwnerId);
+            List<Shift> allShiftForEmployee = await _shiftService.GetShiftsForSpecificEmployeeByIdAsync(requestOwnerId);
             for (int i = 0; i < allShiftForEmployee.Count; i++)
             {
                 if (shiftId != allShiftForEmployee[i].Id && DoesShiftsOverlap(allShiftForEmployee[i], request))
@@ -137,6 +136,7 @@ namespace PlandayChallenge.Controllers.V1
             // NOTE:    Ideally i would simply create a new shift, and update the database with the given shift,
             //          However this causes a tracking error for the given Id, which is only allowed 1 tracker,
             //          So as a patchwerk solution i instead change each individual value for that shift.
+            Shift shift = await _shiftService.GetShiftById(shiftId);
             shift.ShiftOwnerId = Guid.Parse(request.ShiftOwnerId);
             shift.Day = request.Day;
             shift.Month = request.Month;
