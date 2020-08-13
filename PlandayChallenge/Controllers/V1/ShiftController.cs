@@ -134,6 +134,9 @@ namespace PlandayChallenge.Controllers.V1
                 }
             }
 
+            // NOTE:    Ideally i would simply create a new shift, and update the database with the given shift,
+            //          However this causes a tracking error for the given Id, which is only allowed 1 tracker,
+            //          So as a patchwerk solution i instead change each individual value for that shift.
             shift.ShiftOwnerId = Guid.Parse(request.ShiftOwnerId);
             shift.Day = request.Day;
             shift.Month = request.Month;

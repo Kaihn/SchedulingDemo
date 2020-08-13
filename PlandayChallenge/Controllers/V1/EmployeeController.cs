@@ -72,6 +72,9 @@ namespace PlandayChallenge.Controllers
                     return StatusCode(StatusCodes.Status406NotAcceptable, "This Email is already in use, please choose a different Email!");
                 }
             }
+            // NOTE:    Ideally i would simply create a new Employee, and simply replace the existing Employee 
+            //          in the database with the new one, however this causes a tracking error for the given Id, 
+            //          which is only allowed 1 tracker, So as a patchwerk solution i instead change each individual value for that shift.
 
             Employee employee = await _employeeService.GetEmployeeByIdAsync(employeeId);
             employee.FirstName = request.FirstName;
