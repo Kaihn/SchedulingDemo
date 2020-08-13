@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using PlandayChallenge.Contracts;
 using PlandayChallenge.Contracts.V1.Requests;
 using PlandayChallenge.Contracts.V1.Responses;
+using PlandayChallenge.Data;
 using PlandayChallenge.Domain;
 using PlandayChallenge.Services;
 
@@ -17,10 +18,12 @@ namespace PlandayChallenge.Controllers.V1
     public class ShiftController : Controller
     {
         private readonly IShiftService _shiftService;
+        private readonly IEmployeeService _employeeService;
 
-        public ShiftController(IShiftService shiftService)
+        public ShiftController(IShiftService shiftService, IEmployeeService employeeService)
         {
             _shiftService = shiftService;
+            _employeeService = employeeService;
         }
 
         [HttpGet(ApiRoutes.Shifts.GetAll)]
@@ -45,11 +48,12 @@ namespace PlandayChallenge.Controllers.V1
         public async Task<IActionResult> Create([FromRoute] Guid employeeId, [FromBody] CreateShiftRequest request)
         {
             // Error checking
-            // NOTE: An issue with amount of days per month, would be better to have a type that handles this
-            if (request.Day < 1 || request.Day > 31 || request.Month < 1 || request.Month > 12 || request.Year < DateTime.Now.Year)
+            // NOTE:    An issue with amount of days per month where a month might have 30 days, but 31 is a valid input 
+            //          Would be better to have a type like DateTime that handles this
+            if (new DateTime(request.Year, request.Month, request.Day) < DateTime.Now || request.Day < 1 || request.Day > 31 || request.Month < 1 || request.Month > 12)
             {
                 return StatusCode(StatusCodes.Status406NotAcceptable, "The given date for the shift is not valid!" +
-                    "\nDay must be between 1-31, Month must be between 1-12, Year must not be less than current year (" + DateTime.Now.Year + ")");
+                    "\nMake sure the date is not in the past, and that Day must be between 1-31, and Month must be between 1-12!");
             }
             if (request.StartTime < 0 || request.StartTime > 23)
             {
@@ -66,7 +70,7 @@ namespace PlandayChallenge.Controllers.V1
             {
                 if (DoesShiftsOverlap(employeeShifts[i], request))
                 {
-                    return StatusCode(StatusCodes.Status406NotAcceptable, "This shift overlaps with an existing shift for this employee! Id: " + employeeShifts[i].Id);
+                    return StatusCode(StatusCodes.Status406NotAcceptable, "The new time for this shift overlaps with a different shift (Id: " + employeeShifts[i].Id + ") for this employee (Id:" + employeeId + ")");
                 }
             }
 
@@ -87,18 +91,29 @@ namespace PlandayChallenge.Controllers.V1
         {
             // Error checking
             // NOTE: An issue with amount of days per month, would be better to have a type that handles this
-            // TODO: Working on Guid validation for editing...
-            //if (!Guid.TryParse(request.ShiftOwnerId, out Guid result))
-            //{
-            //    return StatusCode(StatusCodes.Status406NotAcceptable, "The given Id is not a valid Guid!");
-            //}
-            //List<Employee> allEmployees = await _employeeService.GetAllEmployeesAsync();
-            //if ()
+            if (!Guid.TryParse(request.ShiftOwnerId, out Guid requestOwnerId))
+            {
+                return StatusCode(StatusCodes.Status406NotAcceptable, "The given Id is not a valid Guid!");
+            }
+            List<Employee> allEmployees = await _employeeService.GetAllEmployeesAsync();
+            bool _ownerIdExists = false;
+            for (int i = 0; i < allEmployees.Count; i++)
+            {
+                if (allEmployees[i].Id == requestOwnerId)
+                {
+                    _ownerIdExists = true;
+                    break;
+                }
+            }
+            if (!_ownerIdExists)
+            {
+                return StatusCode(StatusCodes.Status406NotAcceptable, "No owner with the given Id exists!");
+            }
 
-            if (request.Day < 1 || request.Day > 31 || request.Month < 1 || request.Month > 12 || request.Year < DateTime.Now.Year)
+            if (new DateTime(request.Year, request.Month, request.Day) < DateTime.Now || request.Day < 1 || request.Day > 31 || request.Month < 1 || request.Month > 12)
             {
                 return StatusCode(StatusCodes.Status406NotAcceptable, "The given date for the shift is not valid!" +
-                    "\nDay must be between 1-31, Month must be between 1-12, Year must not be less than current year (" + DateTime.Now.Year + ")");
+                    "\nMake sure the date is not in the past, and that Day must be between 1-31, and Month must be between 1-12!");
             }
             if (request.StartTime < 0 || request.StartTime > 23)
             {
@@ -115,7 +130,7 @@ namespace PlandayChallenge.Controllers.V1
             {
                 if (shiftId != allShiftForEmployee[i].Id && DoesShiftsOverlap(allShiftForEmployee[i], request))
                 {
-                    return StatusCode(StatusCodes.Status406NotAcceptable, "The new time for this shift overlaps with a different shift for this employee! Id: " + allShiftForEmployee[i].Id);
+                    return StatusCode(StatusCodes.Status406NotAcceptable, "The new time for this shift overlaps with a different shift (Id: " + allShiftForEmployee[i].Id + ") for this employee (Id:" + allShiftForEmployee[i].ShiftOwnerId + ")");
                 }
             }
 
