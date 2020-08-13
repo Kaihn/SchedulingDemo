@@ -165,73 +165,72 @@ namespace PlandayChallenge.Controllers.V1
             return NotFound();
         }
 
-        //[HttpPost("{id}")]
-        //public IActionResult Swap(int id, int otherId)
-        //{
-        //    // new shift owner Ids, should be passed as arguments somehow
-        //    int newShiftOwner = 1;
+        [HttpPut(ApiRoutes.Shifts.Swap)]
+        public async Task<IActionResult> Swap([FromBody] SwapShiftsRequest request)
+        {
+            // Parse input strings to Guids, if parsing fails abort
+            if (!Guid.TryParse(request.ShiftAId, out Guid ShiftAGuid))
+            {
+                return StatusCode(StatusCodes.Status406NotAcceptable, "Shift Id A (" + request.ShiftAId + ") is not a valid Guid! Aborting swap...");
+            }
+            if (!Guid.TryParse(request.ShiftBId, out Guid ShiftBGuid))
+            {
+                return StatusCode(StatusCodes.Status406NotAcceptable, "Shift Id B (" + request.ShiftBId + ") is not a valid Guid! Aborting swap...");
+            }
 
-        //    Shift shift = db.Shifts.Find(id);
-        //    if (shift == null)
-        //    {
-        //        return StatusCode(StatusCodes.Status404NotFound, "No shift with the given Id exists!");
-        //    }
+            // Guids are valid, but check if they actually match valid Shift Ids
+            Shift a = await _shiftService.GetShiftById(ShiftAGuid);
+            Shift b = await _shiftService.GetShiftById(ShiftBGuid);
+            if (a == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, "Shift A Id: " + ShiftAGuid + " is a valid Guid, but does not match any shift Ids in the database!");
+            }
+            if (b == null)
+            {
+                return StatusCode(StatusCodes.Status404NotFound, "Shift B Id: " + ShiftBGuid + " is a valid Guid, but does not match any shift Ids in the database!");
+            }
 
-        //    if (IsShiftValid(newShiftOwner, shift))
-        //    {
-        //        shift.employeeId = newShiftOwner;
-        //        db.SaveChanges();
-        //        return StatusCode(StatusCodes.Status202Accepted);
-        //    }
-        //    else
-        //    {
-        //        return StatusCode(StatusCodes.Status417ExpectationFailed, "The new employee for the given shift already has a shift at the given time slot! Aborting swap...");
-        //    }
-        //}
+            // Shift Ids are valid, check that the user is not trying to swap shifts that belong to the same employee
+            if (a.ShiftOwnerId == b.ShiftOwnerId)
+            {
+                return StatusCode(StatusCodes.Status406NotAcceptable, "Trying to swap two shifts that are assigned to the same employee, " +
+                    "when two different employees are expected! Aborting swap...");
+            }
 
-        //public bool IsSwapValid(int firstShiftId, int secondShiftId)
-        //{
-        //    Shift firstShift = db.Shifts.Find(firstShiftId);
-        //    Shift secondShift = db.Shifts.Find(secondShiftId);
-        //    List<Shift> firstEmployeesShifts = new List<Shift>();
-        //    List<Shift> secondEmployeesShifts = new List<Shift>();
+            // Check if Shift a overlaps with any shifts from Employee B, and likewise for Shift B and Employee A 
+            List<Shift> allShiftForEmployeeA = await _shiftService.GetShiftsForSpecificEmployeeByIdAsync(a.ShiftOwnerId);
+            List<Shift> allShiftForEmployeeB = await _shiftService.GetShiftsForSpecificEmployeeByIdAsync(b.ShiftOwnerId);
+            for (int i = 0; i < allShiftForEmployeeA.Count; i++)
+            {
+                if (DoesShiftsOverlap(allShiftForEmployeeA[i], b))
+                {
+                    return StatusCode(StatusCodes.Status406NotAcceptable, "During swap, shift B overlaps with an existing shift (Id: " + allShiftForEmployeeA[i].Id + 
+                        ") for Employee A (Id: " + a.ShiftOwnerId + ")! Aborting...");
+                }
+            }
+            for (int i = 0; i < allShiftForEmployeeB.Count; i++)
+            {
+                if (DoesShiftsOverlap(allShiftForEmployeeB[i], a))
+                {
+                    return StatusCode(StatusCodes.Status406NotAcceptable, "During swap, shift A overlaps with an existing shift (Id: " + allShiftForEmployeeB[i].Id +
+                        ") for Employee B (Id: " + b.ShiftOwnerId + ")! Aborting...");
+                }
+            }
+            // Error checking done, swap is valid - simply swap the shift owners for each shift
+            Guid temp = a.ShiftOwnerId;
+            a.ShiftOwnerId = b.ShiftOwnerId;
+            b.ShiftOwnerId = temp;
 
-        //    // Get all shifts for each employee that is part of the shift swap, but not the shifts that are being swapped
-        //    foreach (var shift in db.Shifts)
-        //    {
-        //        if (shift.shiftId == firstShiftId || shift.shiftId == secondShiftId)
-        //        {
-        //            continue;
-        //        }
-        //        if (firstShift.employeeId == shift.employeeId)
-        //        {
-        //            firstEmployeesShifts.Add(shift);
-        //        }
-        //        else if (secondShift.employeeId == shift.employeeId)
-        //        {
-        //            secondEmployeesShifts.Add(shift);
-        //        }
-        //    }
+            // Inform the database that the shifts have been updated
+            bool aUpdated = await _shiftService.UpdateShiftAsync(a);
+            bool bUpdated = await _shiftService.UpdateShiftAsync(b);
 
-        //    // Check whether swapping the shifts will results in conflicts
-        //    for (int i = 0; i < firstEmployeesShifts.Count; i++)
-        //    {
-        //        if (DoesShiftsOverlap(firstEmployeesShifts[i], secondShift))
-        //        {
-        //            return false;
-        //        }
-        //    }
-
-        //    for (int i = 0; i < secondEmployeesShifts.Count; i++)
-        //    {
-        //        if (DoesShiftsOverlap(secondEmployeesShifts[i], firstShift))
-        //        {
-        //            return false;
-        //        }
-        //    }
-        //    return true;
-        //}
-
+            if (aUpdated && bUpdated)
+            {
+                return Ok("Succesful swap!");
+            }
+            return NotFound();
+        }
 
         /// <summary>
         /// Return true if the shifts overlap, return false if they do not.

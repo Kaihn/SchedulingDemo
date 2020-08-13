@@ -58,10 +58,5 @@ namespace PlandayChallenge.Services
         {
             return await _dataContext.Shifts.SingleOrDefaultAsync(x => x.Id == shiftId);
         }
-
-        //public async Task<bool> SwapShiftsAsync(Shift shiftA, Shift shiftB)
-        //{
-        //    throw new NotImplementedException();
-        //}
     }
 }

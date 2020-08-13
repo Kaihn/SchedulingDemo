@@ -14,6 +14,5 @@ namespace PlandayChallenge.Services
         Task<bool> CreateShiftAsync(Shift shift);
         Task<bool> UpdateShiftAsync(Shift shiftToUpdate);
         Task<bool> DeleteShiftAsync(Guid shiftId);
-        //Task<bool> SwapShiftsAsync(Shift shiftA, Shift shiftB);
     }
 }
