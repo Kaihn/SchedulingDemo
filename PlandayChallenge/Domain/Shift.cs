@@ -11,7 +11,7 @@ namespace PlandayChallenge.Domain
         public int Day { get; set; }
         public int Month { get; set; }
         public int Year { get; set; }
-        public int StartTime { get; set; }
-        public int Duration { get; set; }
+        public int StartTime { get; set; } // Hourly
+        public int EndTime { get; set; } // Hourly
     }
 }

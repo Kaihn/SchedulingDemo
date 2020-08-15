@@ -12,6 +12,6 @@ namespace PlandayChallenge.Contracts.V1.Requests
         public int Month { get; set; }
         public int Year { get; set; }
         public int StartTime { get; set; }
-        public int Duration { get; set; }
+        public int EndTime { get; set; }
     }
 }

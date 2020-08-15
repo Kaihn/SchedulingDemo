@@ -26,12 +26,21 @@ namespace PlandayChallenge.Controllers.V1
             _employeeService = employeeService;
         }
 
+        /// <summary>
+        /// Get all the Shifts in the Databaseas a List of Shifts
+        /// </summary>
+        /// <returns></returns>
         [HttpGet(ApiRoutes.Shifts.GetAll)]
         public async Task<IActionResult> GetAll()
         {
             return Ok(await _shiftService.GetAllShiftsAsync());
         }
 
+        /// <summary>
+        /// Get all the shifts for a specific Employee, based on the given Employee Id
+        /// </summary>
+        /// <param name="employeeId"></param>
+        /// <returns></returns>
         [HttpGet(ApiRoutes.Shifts.GetForSpecificEmployee)]
         public async Task<IActionResult> GetForSpecificEmployee([FromRoute] Guid employeeId)
         {
@@ -50,19 +59,19 @@ namespace PlandayChallenge.Controllers.V1
             // Error checking
             // NOTE:    An issue with amount of days per month where a month might have 30 days, but 31 is a valid input 
             //          Would be better to have a type like DateTime that handles this
-            if (new DateTime(request.Year, request.Month, request.Day) < DateTime.Now || request.Day < 1 || request.Day > 31 || request.Month < 1 || request.Month > 12)
+            if (request.Day < 1 || request.Day > 31 || request.Month < 1 || request.Month > 12 || request.Year < 1 || 
+                new DateTime(request.Year, request.Month, request.Day) < DateTime.Now)
             {
                 return StatusCode(StatusCodes.Status406NotAcceptable, "The given date for the shift is not valid!" +
-                    "\nMake sure the date is not in the past, and that Day must be between 1-31, and Month must be between 1-12!");
+                    "\nMake sure the date is not in the past, and that Day is between 1-31, and Month is between 1-12!");
             }
             if (request.StartTime < 0 || request.StartTime > 23)
             {
-                return StatusCode(StatusCodes.Status406NotAcceptable, "The start time for the given shift is not valid! Must be between 0 and 23, but was " + request.StartTime + ".");
+                return StatusCode(StatusCodes.Status406NotAcceptable, "The time given for the start of the shift is not valid! Must be between 0 and 23!");
             }
-            if (request.StartTime + request.Duration > 24 || request.Duration < 1)
+            if (request.EndTime <= request.StartTime || request.EndTime > 24)
             {
-                return StatusCode(StatusCodes.Status406NotAcceptable, "The duration for the given shift is not valid, as shifts are not allowed to go beyond the assigned day, and must be bigger than 0. End of shift was " 
-                    + (request.StartTime + request.Duration) + ".");
+                return StatusCode(StatusCodes.Status406NotAcceptable, "The time given for the end of the shift is not valid! Must be higher than the start time (" + request.StartTime + "), but no higher than 24!");
             }
 
             List<Shift> employeeShifts = await _shiftService.GetShiftsForSpecificEmployeeByIdAsync(employeeId);
@@ -70,12 +79,12 @@ namespace PlandayChallenge.Controllers.V1
             {
                 if (DoesShiftsOverlap(employeeShifts[i], request))
                 {
-                    return StatusCode(StatusCodes.Status406NotAcceptable, "The new time for this shift overlaps with a different shift (Id: " + employeeShifts[i].Id + ") for this employee (Id:" + employeeId + ")");
+                    return StatusCode(StatusCodes.Status406NotAcceptable, "The new time for this shift overlaps with a different shift (Id:" + employeeShifts[i].Id + ") for this employee (Id:" + employeeId + ")");
                 }
             }
 
             var shift = new Shift { ShiftOwnerId = employeeId, Day = request.Day, Month = request.Month, 
-                Year = request.Year, StartTime = request.StartTime, Duration = request.Duration};
+                Year = request.Year, StartTime = request.StartTime, EndTime = request.EndTime};
 
             await _shiftService.CreateShiftAsync(shift);
 
@@ -110,26 +119,26 @@ namespace PlandayChallenge.Controllers.V1
                 return StatusCode(StatusCodes.Status406NotAcceptable, "No owner with the given Id exists!");
             }
 
-            if (new DateTime(request.Year, request.Month, request.Day) < DateTime.Now || request.Day < 1 || request.Day > 31 || request.Month < 1 || request.Month > 12)
+            if (request.Day < 1 || request.Day > 31 || request.Month < 1 || request.Month > 12 || request.Year < 1 || 
+                new DateTime(request.Year, request.Month, request.Day) < DateTime.Now)
             {
                 return StatusCode(StatusCodes.Status406NotAcceptable, "The given date for the shift is not valid!" +
-                    "\nMake sure the date is not in the past, and that Day must be between 1-31, and Month must be between 1-12!");
+                    "\nMake sure the date is not in the past, and that Day is between 1-31, and Month is between 1-12!");
             }
             if (request.StartTime < 0 || request.StartTime > 23)
             {
-                return StatusCode(StatusCodes.Status406NotAcceptable, "The start time for the given shift is not valid! Must be between 0 and 23, but was " + request.StartTime);
+                return StatusCode(StatusCodes.Status406NotAcceptable, "The time given for the start of the shift is not valid! Must be between 0 and 23!");
             }
-            if (request.StartTime + request.Duration > 24 || request.Duration < 1)
+            if (request.EndTime <= request.StartTime || request.EndTime > 24)
             {
-                return StatusCode(StatusCodes.Status406NotAcceptable, "The duration for the given shift is not valid, as shifts are not allowed to go beyond the assigned day, and must be bigger than 0. End of shift was "
-                    + (request.StartTime + request.Duration) + ".");
+                return StatusCode(StatusCodes.Status406NotAcceptable, "The time given for the end of the shift is not valid! Must be higher than the start time (" + request.StartTime + "), but no higher than 24!");
             }
             List<Shift> allShiftForEmployee = await _shiftService.GetShiftsForSpecificEmployeeByIdAsync(requestOwnerId);
             for (int i = 0; i < allShiftForEmployee.Count; i++)
             {
                 if (shiftId != allShiftForEmployee[i].Id && DoesShiftsOverlap(allShiftForEmployee[i], request))
                 {
-                    return StatusCode(StatusCodes.Status406NotAcceptable, "The new time for this shift overlaps with a different shift (Id: " + allShiftForEmployee[i].Id + ") for this employee (Id:" + allShiftForEmployee[i].ShiftOwnerId + ")");
+                    return StatusCode(StatusCodes.Status406NotAcceptable, "The new time for this shift overlaps with a different shift (Id:" + allShiftForEmployee[i].Id + ") for this employee (Id:" + allShiftForEmployee[i].ShiftOwnerId + ")");
                 }
             }
 
@@ -142,7 +151,7 @@ namespace PlandayChallenge.Controllers.V1
             shift.Month = request.Month;
             shift.Year = request.Year;
             shift.StartTime = request.StartTime;
-            shift.Duration = request.Duration;
+            shift.EndTime = request.EndTime;
 
             bool updated = await _shiftService.UpdateShiftAsync(shift);
 
@@ -167,6 +176,17 @@ namespace PlandayChallenge.Controllers.V1
             return NotFound();
         }
 
+        [HttpDelete(ApiRoutes.Shifts.DeleteAll)]
+        public async Task<IActionResult> DeleteAll()
+        {
+            bool deleted = await _shiftService.DeleteAllShiftsAsync();
+            if (deleted)
+            {
+                return StatusCode(StatusCodes.Status204NoContent, "All shifts have been successfully deleted!");
+            }
+            return NotFound();
+        }
+
         [HttpPut(ApiRoutes.Shifts.Swap)]
         public async Task<IActionResult> Swap([FromBody] SwapShiftsRequest request)
         {
@@ -185,11 +205,11 @@ namespace PlandayChallenge.Controllers.V1
             Shift b = await _shiftService.GetShiftById(ShiftBGuid);
             if (a == null)
             {
-                return StatusCode(StatusCodes.Status404NotFound, "Shift A Id: " + ShiftAGuid + " is a valid Guid, but does not match any shift Ids in the database!");
+                return StatusCode(StatusCodes.Status404NotFound, "Shift A Id:" + ShiftAGuid + " is a valid Guid, but does not match any shift Ids in the database!");
             }
             if (b == null)
             {
-                return StatusCode(StatusCodes.Status404NotFound, "Shift B Id: " + ShiftBGuid + " is a valid Guid, but does not match any shift Ids in the database!");
+                return StatusCode(StatusCodes.Status404NotFound, "Shift B Id:" + ShiftBGuid + " is a valid Guid, but does not match any shift Ids in the database!");
             }
 
             // Shift Ids are valid, check that the user is not trying to swap shifts that belong to the same employee
@@ -206,16 +226,16 @@ namespace PlandayChallenge.Controllers.V1
             {
                 if (DoesShiftsOverlap(allShiftForEmployeeA[i], b))
                 {
-                    return StatusCode(StatusCodes.Status406NotAcceptable, "During swap, shift B overlaps with an existing shift (Id: " + allShiftForEmployeeA[i].Id + 
-                        ") for Employee A (Id: " + a.ShiftOwnerId + ")! Aborting...");
+                    return StatusCode(StatusCodes.Status406NotAcceptable, "During swap, shift B overlaps with an existing shift (Id:" + allShiftForEmployeeA[i].Id + 
+                        ") for Employee A (Id:" + a.ShiftOwnerId + ")! Aborting...");
                 }
             }
             for (int i = 0; i < allShiftForEmployeeB.Count; i++)
             {
                 if (DoesShiftsOverlap(allShiftForEmployeeB[i], a))
                 {
-                    return StatusCode(StatusCodes.Status406NotAcceptable, "During swap, shift A overlaps with an existing shift (Id: " + allShiftForEmployeeB[i].Id +
-                        ") for Employee B (Id: " + b.ShiftOwnerId + ")! Aborting...");
+                    return StatusCode(StatusCodes.Status406NotAcceptable, "During swap, shift A overlaps with an existing shift (Id:" + allShiftForEmployeeB[i].Id +
+                        ") for Employee B (Id:" + b.ShiftOwnerId + ")! Aborting...");
                 }
             }
             // Error checking done, swap is valid - simply swap the shift owners for each shift
@@ -245,8 +265,7 @@ namespace PlandayChallenge.Controllers.V1
             if (a.Year == b.Year &&
                 a.Month == b.Month &&
                 a.Day == b.Day &&
-                (!(a.StartTime + a.Duration <= b.StartTime) &&
-                 !(b.StartTime + b.Duration <= a.StartTime)))
+                !(a.EndTime <= b.StartTime || a.StartTime >= b.EndTime))
             {
                 return true;
             }
@@ -264,8 +283,7 @@ namespace PlandayChallenge.Controllers.V1
             if (a.Year == b.Year &&
                 a.Month == b.Month &&
                 a.Day == b.Day &&
-                (!(a.StartTime + a.Duration <= b.StartTime) &&
-                 !(b.StartTime + b.Duration <= a.StartTime)))
+                !(a.EndTime <= b.StartTime || a.StartTime >= b.EndTime))
             {
                 return true;
             }
@@ -283,8 +301,7 @@ namespace PlandayChallenge.Controllers.V1
             if (a.Year == b.Year &&
                 a.Month == b.Month &&
                 a.Day == b.Day &&
-                (!(a.StartTime + a.Duration <= b.StartTime) &&
-                 !(b.StartTime + b.Duration <= a.StartTime)))
+                !(a.EndTime <= b.StartTime || a.StartTime >= b.EndTime))
             {
                 return true;
             }

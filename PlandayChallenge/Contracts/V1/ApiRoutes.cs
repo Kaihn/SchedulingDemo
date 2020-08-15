@@ -19,7 +19,8 @@ namespace PlandayChallenge.Contracts
             public const string Get = Base + "/shifts/{shiftId}";
             public const string GetForSpecificEmployee = Base + "/shifts/{employeeId}";
             public const string Edit = Base + "/shifts/{shiftId}";
-            public const string Swap = Base + "/shifts/";
+            public const string Swap = Base + "/shifts";
+            public const string DeleteAll = Base + "/shifts";
             public const string Delete = Base + "/shifts/{shiftId}";
         }
 

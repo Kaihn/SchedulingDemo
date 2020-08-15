@@ -12,6 +12,8 @@
     <Compile Remove="Data\Migrations\20200813021356_Initial.Designer.cs" />
     <Compile Remove="Data\Migrations\20200813114455_EditedShifts.cs" />
     <Compile Remove="Data\Migrations\20200813114455_EditedShifts.Designer.cs" />
+    <Compile Remove="Data\Migrations\20200815182249_DeleteAllOption.cs" />
+    <Compile Remove="Data\Migrations\20200815182249_DeleteAllOption.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

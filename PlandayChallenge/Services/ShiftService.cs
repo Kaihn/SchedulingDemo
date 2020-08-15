@@ -47,6 +47,13 @@ namespace PlandayChallenge.Services
             return deleted > 0;
         }
 
+        public async Task<bool> DeleteAllShiftsAsync()
+        {
+            _dataContext.RemoveRange(_dataContext.Shifts);
+            var deleted = await _dataContext.SaveChangesAsync();
+            return deleted > 0;
+        }
+
         public async Task<bool> UpdateShiftAsync(Shift shiftToUpdate)
         {
             _dataContext.Shifts.Update(shiftToUpdate);
