@@ -158,9 +158,11 @@ namespace PlandayChallenge.Controllers.V1
         {
             bool deleted = await _shiftService.DeleteShiftAsync(shiftId);
 
+            // If succesfully deleted, return NoContent to display that there is no longer any content.
+            // It could be considered to store the shift and display that this was the shift that was deleted.
             if (deleted)
             {
-                return NoContent();
+                return StatusCode(StatusCodes.Status204NoContent, "Shift successfully deleted!");
             }
             return NotFound();
         }
