@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace PlandayChallenge.Contracts
+﻿namespace PlandayChallenge.Contracts
 {
     public static class ApiRoutes
     {
@@ -20,8 +15,8 @@ namespace PlandayChallenge.Contracts
             public const string GetForSpecificEmployee = Base + "/shifts/{employeeId}";
             public const string Edit = Base + "/shifts/{shiftId}";
             public const string Swap = Base + "/shifts";
-            public const string DeleteAll = Base + "/shifts";
             public const string Delete = Base + "/shifts/{shiftId}";
+            public const string DeleteMultipleShifts = Base + "/shifts/";
         }
 
         public static class Employees

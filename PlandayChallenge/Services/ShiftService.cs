@@ -26,11 +26,23 @@ namespace PlandayChallenge.Services
             return await _dataContext.Shifts.Where(x => x.ShiftOwnerId == employeeId).ToListAsync();
         }
 
+        public async Task<Shift> GetShiftByIdAsync(Guid shiftId)
+        {
+            return await _dataContext.Shifts.SingleOrDefaultAsync(x => x.Id == shiftId);
+        }
+
         public async Task<bool> CreateShiftAsync(Shift shift)
         {
             await _dataContext.Shifts.AddAsync(shift);
             var created = await _dataContext.SaveChangesAsync();
             return created > 0;
+        }
+
+        public async Task<bool> UpdateShiftAsync(Shift shiftToUpdate)
+        {
+            _dataContext.Shifts.Update(shiftToUpdate);
+            var updated = await _dataContext.SaveChangesAsync();
+            return updated > 0;
         }
 
         public async Task<bool> DeleteShiftAsync(Guid shiftId)
@@ -47,23 +59,22 @@ namespace PlandayChallenge.Services
             return deleted > 0;
         }
 
+        public async Task<bool> DeleteShiftsForSpecificEmployeesByIdAsync(Guid[] employeeId)
+        {
+            for (int i = 0; i < employeeId.Length; i++)
+            {
+                _dataContext.Shifts.RemoveRange(_dataContext.Shifts.Where(x => x.ShiftOwnerId == employeeId[i]));
+            }
+            int deleted = await _dataContext.SaveChangesAsync();
+            return deleted > 0;
+
+        }
+
         public async Task<bool> DeleteAllShiftsAsync()
         {
             _dataContext.RemoveRange(_dataContext.Shifts);
             var deleted = await _dataContext.SaveChangesAsync();
             return deleted > 0;
-        }
-
-        public async Task<bool> UpdateShiftAsync(Shift shiftToUpdate)
-        {
-            _dataContext.Shifts.Update(shiftToUpdate);
-            var updated = await _dataContext.SaveChangesAsync();
-            return updated > 0;
-        }
-
-        public async Task<Shift> GetShiftById(Guid shiftId)
-        {
-            return await _dataContext.Shifts.SingleOrDefaultAsync(x => x.Id == shiftId);
         }
     }
 }

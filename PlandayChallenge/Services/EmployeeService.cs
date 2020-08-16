@@ -3,7 +3,6 @@ using PlandayChallenge.Data;
 using PlandayChallenge.Domain;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace PlandayChallenge.Services
@@ -33,7 +32,7 @@ namespace PlandayChallenge.Services
             return created > 0;
         }
 
-        public async Task<bool> EditEmployeeAsync(Employee employeeToUpdate)
+        public async Task<bool> UpdateEmployeeAsync(Employee employeeToUpdate)
         {
             _dataContext.Employees.Update(employeeToUpdate);
             var updated = await _dataContext.SaveChangesAsync();

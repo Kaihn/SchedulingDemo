@@ -20,16 +20,25 @@ namespace PlandayChallenge.Controllers
             _employeeService = employeeService;
         }
 
+        /// <summary>
+        /// Get all employees as a list.
+        /// </summary>
+        /// <returns></returns>
         [HttpGet(ApiRoutes.Employees.GetAll)]
         public async Task<IActionResult> GetAll()
         {
             return Ok(await _employeeService.GetAllEmployeesAsync());
         }
 
+        /// <summary>
+        /// Get a specific employee from the employee Id.
+        /// </summary>
+        /// <param name="employeeId"></param>
+        /// <returns></returns>
         [HttpGet(ApiRoutes.Employees.Get)]
         public async Task<IActionResult> Get([FromRoute] Guid employeeId)
         {
-            var employee = await _employeeService.GetEmployeeByIdAsync(employeeId);
+            Employee employee = await _employeeService.GetEmployeeByIdAsync(employeeId);
 
             if (employee == null)
             {
@@ -38,6 +47,11 @@ namespace PlandayChallenge.Controllers
             return Ok(employee);
         }
 
+        /// <summary>
+        /// Create an employee based on a FromBody request, assuming the email is different from the existing employees in the database.
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPost(ApiRoutes.Employees.Create)]
         public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request)
         {
@@ -50,19 +64,25 @@ namespace PlandayChallenge.Controllers
                 }
             }
 
-            var employee = new Employee { FirstName = request.FirstName, LastName = request.LastName, Email = request.Email};
+            Employee employee = new Employee { FirstName = request.FirstName, LastName = request.LastName, Email = request.Email};
 
             await _employeeService.CreateEmployeeAsync(employee);
 
-            var baseUrl = HttpContext.Request.Scheme + "//" + HttpContext.Request.Host.ToUriComponent();
-            var locationUri = baseUrl + "/" + ApiRoutes.Employees.Get.Replace("{employeeId}", employee.Id.ToString());
+            string baseUrl = HttpContext.Request.Scheme + "//" + HttpContext.Request.Host.ToUriComponent();
+            string locationUri = baseUrl + "/" + ApiRoutes.Employees.Get.Replace("{employeeId}", employee.Id.ToString());
 
-            var response = new EmployeeResponse { Id = employee.Id };
+            EmployeeResponse response = new EmployeeResponse { Id = employee.Id };
             return Created(locationUri, response);
         }
 
+        /// <summary>
+        /// Edit an existing employee given its Id and based on a FromBody request.
+        /// </summary>
+        /// <param name="employeeId"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
         [HttpPut(ApiRoutes.Employees.Edit)]
-        public async Task<IActionResult> Edit([FromRoute] Guid employeeId, [FromBody] UpdateEmployeeRequest request)
+        public async Task<IActionResult> Edit([FromRoute] Guid employeeId, [FromBody] EditEmployeeRequest request)
         {
             List<Employee> allEmployees = await _employeeService.GetAllEmployeesAsync();
             for (int i = 0; i < allEmployees.Count; i++)
@@ -72,16 +92,16 @@ namespace PlandayChallenge.Controllers
                     return StatusCode(StatusCodes.Status406NotAcceptable, "This Email is already in use, please choose a different Email!");
                 }
             }
+
             // NOTE:    Ideally i would simply create a new Employee, and simply replace the existing Employee 
             //          in the database with the new one, however this causes a tracking error for the given Id, 
             //          which is only allowed 1 tracker, So as a patchwerk solution i instead change each individual value for that shift.
-
             Employee employee = await _employeeService.GetEmployeeByIdAsync(employeeId);
             employee.FirstName = request.FirstName;
             employee.LastName = request.LastName;
             employee.Email = request.Email;
 
-            bool updated = await _employeeService.EditEmployeeAsync(employee);
+            bool updated = await _employeeService.UpdateEmployeeAsync(employee);
 
             if (updated)
             {
@@ -90,7 +110,11 @@ namespace PlandayChallenge.Controllers
             return NotFound();
         }
 
-
+        /// <summary>
+        /// Delete a specific employee given its Id.
+        /// </summary>
+        /// <param name="employeeId"></param>
+        /// <returns></returns>
         [HttpDelete(ApiRoutes.Employees.Delete)]
         public async Task<IActionResult> Delete([FromRoute] Guid employeeId)
         {

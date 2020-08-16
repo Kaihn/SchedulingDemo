@@ -1,15 +1,9 @@
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
-using PlandayChallenge.Data;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PlandayChallenge.Configs;
-using System.Linq;
-using System;
 using PlandayChallenge.Installers;
 
 namespace PlandayChallenge

@@ -5596,11 +5596,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Jannik\\Documents\\GitHub\\SchedulingDemo\\PlandayChallenge\\PlandayChallenge.csproj",
+      "projectUniqueName": "D:\\Programming\\GitHub\\SchedulingDemo\\PlandayChallenge\\PlandayChallenge.csproj",
       "projectName": "PlandayChallenge",
-      "projectPath": "C:\\Users\\Jannik\\Documents\\GitHub\\SchedulingDemo\\PlandayChallenge\\PlandayChallenge.csproj",
+      "projectPath": "D:\\Programming\\GitHub\\SchedulingDemo\\PlandayChallenge\\PlandayChallenge.csproj",
       "packagesPath": "C:\\Users\\Jannik\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Jannik\\Documents\\GitHub\\SchedulingDemo\\PlandayChallenge\\obj\\",
+      "outputPath": "D:\\Programming\\GitHub\\SchedulingDemo\\PlandayChallenge\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Microsoft\\Xamarin\\NuGet\\"

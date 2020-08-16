@@ -1,6 +1,6 @@
 ﻿namespace PlandayChallenge.Contracts.V1.Requests
 {
-    public class UpdateEmployeeRequest
+    public class EditEmployeeRequest
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }

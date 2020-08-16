@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace PlandayChallenge.Contracts.V1.Requests
+﻿namespace PlandayChallenge.Contracts.V1.Requests
 {
-    public class UpdateShiftRequest
+    public class EditShiftRequest
     {
         public string ShiftOwnerId { get; set; }
         public int Day { get; set; }
